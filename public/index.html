@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AXIS Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="login-view" class="screen hidden">
+    <div class="login-card">
+      <h1>AXIS Dashboard</h1>
+      <p class="muted">Staff sign-in. Accounts are created by an administrator.</p>
+      <input id="email" type="email" placeholder="Email" autocomplete="username" />
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+      <button id="login-btn">Sign in</button>
+      <p id="login-error" class="error"></p>
+    </div>
+  </div>
+
+  <div id="app-view" class="screen hidden">
+    <aside class="sidebar">
+      <div class="brand">AXIS</div>
+      <nav id="nav"></nav>
+      <div class="sidebar-footer">
+        <div id="user-label" class="muted"></div>
+        <button id="logout-btn" class="ghost">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <h2 id="page-title">Overview</h2>
+        <div class="fx-widget" id="fx-widget">
+          <span class="muted">1 USD =</span>
+          <span id="fx-rate">–</span>
+          <span class="muted">SCR</span>
+          <button id="fx-toggle" class="ghost small">Show in USD</button>
+        </div>
+      </header>
+
+      <section id="page-body"></section>
+    </main>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

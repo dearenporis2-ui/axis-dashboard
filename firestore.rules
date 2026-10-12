@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isActive() {
+      return isSignedIn() && request.auth.token.active == true;
+    }
+    function hasRole(r) {
+      return isActive() && request.auth.token.role == r;
+    }
+    function isAdmin() { return hasRole('admin'); }
+    function isSales() { return hasRole('sales_associate'); }
+    function isDev()   { return hasRole('developer'); }
+    function isSelf(uid) { return isActive() && request.auth.uid == uid; }
+
+    match /users/{uid} {
+      allow read: if isAdmin() || isSelf(uid);
+      allow write: if isAdmin();
+    }
+
+    match /clients/{clientId} {
+      allow read: if isAdmin()
+        || (isDev() && request.auth.uid in resource.data.assigned_developer_uids);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (
+          isDev()
+          && request.auth.uid in resource.data.assigned_developer_uids
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status_color', 'uptime_status', 'backup_status', 'security_status',
+            'last_backup_date', 'security_check_passed', 'health_updated_at'
+          ])
+        );
+    }
+
+    match /client_billing/{clientId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.payment_status in ['Paid', 'Pending', 'Overdue'];
+      allow delete: if isAdmin();
+    }
+
+    match /hour_logs/{logId} {
+      allow read: if isAdmin()
+        || (isDev() && resource.data.dev_uid == request.auth.uid);
+      allow create: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    match /leads/{leadId} {
+      allow read: if isAdmin()
+        || (isSales() && resource.data.owner_uid == request.auth.uid);
+
+      allow create: if request.resource.data.status != 'won'
+        && (isAdmin()
+            || (isSales() && request.resource.data.owner_uid == request.auth.uid));
+
+      allow update: if resource.data.status != 'won'
+        && request.resource.data.status != 'won'
+        && (isAdmin()
+            || (isSales()
+                && resource.data.owner_uid == request.auth.uid
+                && request.resource.data.owner_uid == resource.data.owner_uid));
+
+      allow delete: if isAdmin();
+    }
+
+    match /commissions/{id} {
+      allow read: if isAdmin()
+        || (isSales() && resource.data.sales_uid == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /settings/{docId} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
